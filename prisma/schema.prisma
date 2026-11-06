@@ -1,0 +1,177 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+enum Day {
+  SENIN
+  SELASA
+  RABU
+  KAMIS
+  JUMAT
+  SABTU
+}
+
+enum UserRole {
+  ADMIN
+  KAPRODI
+  SARPRAS
+  VIEWER
+}
+
+enum TicketStatus {
+  DIAJUKAN
+  DALAM_PENINJAUAN
+  DISETUJUI
+  DITOLAK
+}
+
+enum TicketType {
+  PEMINJAMAN
+  PERUBAHAN_JADWAL
+}
+
+enum ImprovementStatus {
+  OPEN
+  IN_PROGRESS
+  SOLVED
+}
+
+enum ImprovementPriority {
+  RENDAH
+  SEDANG
+  TINGGI
+  KRITIS
+}
+
+enum FlagType {
+  INFO
+  WARNING
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String
+  role      UserRole @default(VIEWER)
+  tickets   Ticket[] @relation("TicketSubmitter")
+  auditLogs AuditLog[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Room {
+  id             String     @id @default(cuid())
+  code           String     @unique
+  name           String
+  building       String?
+  floor          String?
+  capacitySeat   Int
+  maxDailyMinutes Int       @default(360)
+  active         Boolean    @default(true)
+  schedules      Schedule[]
+  tickets        Ticket[]
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
+
+  @@index([code])
+}
+
+model Course {
+  id        String     @id @default(cuid())
+  code      String     @unique
+  name      String
+  schedules Schedule[]
+}
+
+model Schedule {
+  id               String   @id @default(cuid())
+  sourceCode       String?  @unique
+  roomId           String
+  room             Room     @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  courseId         String?
+  course           Course?  @relation(fields: [courseId], references: [id])
+  day              Day
+  startMinutes     Int
+  endMinutes       Int
+  enrolledStudents Int      @default(0)
+  className        String?
+  active           Boolean  @default(true)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@index([roomId, day, startMinutes, endMinutes])
+}
+
+model Ticket {
+  id                 String       @id @default(cuid())
+  submitterId        String
+  submitter          User         @relation("TicketSubmitter", fields: [submitterId], references: [id])
+  targetRoomId       String
+  targetRoom         Room         @relation(fields: [targetRoomId], references: [id])
+  sourceScheduleId   String?
+  type               TicketType   @default(PEMINJAMAN)
+  targetDay          Day
+  startMinutes       Int
+  endMinutes         Int
+  enrolledStudents   Int
+  purpose            String
+  status             TicketStatus @default(DIAJUKAN)
+  adminNotes         String?
+  flags              TicketFlag[]
+  auditLogs          AuditLog[]
+  createdAt          DateTime     @default(now())
+  updatedAt          DateTime     @updatedAt
+
+  @@index([targetRoomId, targetDay, startMinutes, endMinutes])
+  @@index([status])
+}
+
+model TicketFlag {
+  id        String   @id @default(cuid())
+  ticketId  String
+  ticket    Ticket   @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  type      FlagType
+  code      String
+  message   String
+  createdAt DateTime @default(now())
+
+  @@unique([ticketId, code])
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  ticketId  String
+  ticket    Ticket   @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  actorId   String
+  actor     User     @relation(fields: [actorId], references: [id])
+  action    String
+  notes     String?
+  createdAt DateTime @default(now())
+}
+
+model ImprovementTicket {
+  id          String              @id @default(cuid())
+  title       String
+  description String
+  category    String
+  solution    String
+  reference   String?
+  priority    ImprovementPriority @default(SEDANG)
+  status      ImprovementStatus   @default(OPEN)
+  creatorId   String
+  assigneeId  String?
+  resolution  String?
+  evidence    String?
+  createdAt   DateTime            @default(now())
+  updatedAt   DateTime            @updatedAt
+
+  @@index([status])
+  @@index([priority])
+  @@index([assigneeId])
+}
