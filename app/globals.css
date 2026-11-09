@@ -21,6 +21,11 @@ a { color: inherit; text-decoration: none; }
 button, input, select { font: inherit; }
 button, a { -webkit-tap-highlight-color: transparent; }
 
+.route-loading { min-height: 100vh; display: flex; align-items: center; justify-content: center; gap: 11px; color: var(--body); font-size: 13px; }
+.route-loading__spinner { width: 18px; height: 18px; border: 2px solid var(--line-strong); border-top-color: var(--forest); border-radius: 50%; animation: route-loading-spin .7s linear infinite; }
+@keyframes route-loading-spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .route-loading__spinner { animation: none; } }
+
 .app-shell { min-height: 100vh; }
 .sidebar {
   position: fixed; inset: 0 auto 0 0; width: 248px; z-index: 20;

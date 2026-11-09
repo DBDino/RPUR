@@ -11,7 +11,7 @@ Dashboard tata kelola roster perkuliahan dan utilisasi ruangan untuk Universitas
 
 1. Buat database PostgreSQL di Neon.
 2. Salin `.env.example` menjadi `.env.local`.
-3. Isi `DATABASE_URL` dan `DIRECT_URL`.
+3. Isi `DATABASE_URL` dengan connection string pooled Neon (host berakhiran `-pooler`) dan `DIRECT_URL` dengan connection string direct untuk migrasi.
 4. Jalankan:
 
 ```powershell
@@ -60,7 +60,9 @@ npm.cmd run build
 
 Migrasi Prisma tersimpan di `prisma/migrations` dan dapat dijalankan ulang ketika repository di-clone atau saat deployment Vercel.
 
-Tambahkan environment variable yang sama pada project Vercel. `DIRECT_URL` dapat sama dengan `DATABASE_URL` untuk akun Neon awal.
+Tambahkan environment variable yang sama pada project Vercel. Untuk Neon, gunakan URL direct (non-`-pooler`) pada `DIRECT_URL`; jangan gunakan URL pooled untuk migrasi.
+
+Fungsi Vercel dipin ke region Singapura (`sin1`) melalui `vercel.json`, sejalan dengan region database Neon `aws-ap-southeast-1`. Pengaturan autosuspend Neon saat ini nonaktif; biarkan demikian jika prioritasnya menghindari cold start, dengan mempertimbangkan biaya compute.
 
 ## Matriks akses berdasarkan FSD
 

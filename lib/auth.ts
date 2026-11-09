@@ -2,6 +2,7 @@ import "server-only";
 
 import { createHmac, timingSafeEqual } from "node:crypto";
 import { cookies } from "next/headers";
+import { cache } from "react";
 import { prisma } from "@/lib/prisma";
 import type { UserRole } from "@prisma/client";
 
@@ -24,7 +25,7 @@ export function signSession(email: string, role: UserRole) {
   return `${payload}.${signature}`;
 }
 
-export async function verifySession(): Promise<{ id: string; email: string; name: string; role: UserRole } | null> {
+export const verifySession = cache(async function verifySession(): Promise<{ id: string; email: string; name: string; role: UserRole } | null> {
   const cookie = (await cookies()).get(SESSION_COOKIE)?.value;
   if (!cookie) return null;
   const [payload, signature] = cookie.split(".");
@@ -35,11 +36,15 @@ export async function verifySession(): Promise<{ id: string; email: string; name
   const expectedBuffer = Buffer.from(expected);
   if (actualBuffer.length !== expectedBuffer.length || !timingSafeEqual(actualBuffer, expectedBuffer)) return null;
 
+  let data: unknown;
   try {
-    const data = JSON.parse(Buffer.from(payload, "base64url").toString("utf8")) as { email?: string; exp?: number };
-    if (!data.email || !data.exp || data.exp < Date.now()) return null;
-    return prisma.user.findUnique({ where: { email: data.email } });
+    data = JSON.parse(Buffer.from(payload, "base64url").toString("utf8"));
   } catch {
     return null;
   }
-}
+  if (typeof data !== "object" || data === null || !("email" in data) || !("exp" in data)) return null;
+  const { email, exp } = data;
+  if (typeof email !== "string" || typeof exp !== "number" || exp < Date.now()) return null;
+
+  return prisma.user.findUnique({ where: { email } });
+});

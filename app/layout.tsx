@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import { AppShell } from "@/components/app-shell";
+import { RouteLoading } from "@/components/route-loading";
 import { verifySession } from "@/lib/auth";
-import { headers } from "next/headers";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -9,16 +10,21 @@ export const metadata: Metadata = {
   description: "Dashboard roster perkuliahan dan utilisasi ruangan",
 };
 
-export default async function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
-  const requestHeaders = await headers();
-  const pathname = requestHeaders.get("x-next-pathname") || "";
+async function AuthenticatedShell({ children }: Readonly<{ children: React.ReactNode }>) {
   const user = await verifySession();
-  if (pathname === "/login") return <html lang="id"><body>{children}</body></html>;
-  if (!user) return <html lang="id"><body>{children}</body></html>;
+
+  if (!user) return children;
+
+  return <AppShell user={user}>{children}</AppShell>;
+}
+
+export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="id">
       <body>
-        <AppShell user={user}>{children}</AppShell>
+        <Suspense fallback={<RouteLoading />}>
+          <AuthenticatedShell>{children}</AuthenticatedShell>
+        </Suspense>
       </body>
     </html>
   );
