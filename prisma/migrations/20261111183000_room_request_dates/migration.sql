@@ -1,0 +1,5 @@
+ALTER TABLE "Ticket"
+  ADD COLUMN "requestedDate" DATE NOT NULL DEFAULT CURRENT_DATE;
+
+ALTER TABLE "Schedule"
+  ADD COLUMN "scheduledDate" DATE;

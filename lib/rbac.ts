@@ -8,6 +8,7 @@ export type Resource =
   | "conflicts"
   | "tickets"
   | "improvements"
+  | "users"
   | "sync";
 
 export type Capability = "view" | "add" | "update" | "delete";
@@ -21,6 +22,7 @@ const permissions: Record<UserRole, Partial<Record<Resource, Capability[]>>> = {
     conflicts: ["view"],
     tickets: ["view", "add", "update", "delete"],
     improvements: ["view", "add", "update", "delete"],
+    users: ["view", "add", "update"],
     sync: ["view", "add", "update"],
   },
   KAPRODI: {

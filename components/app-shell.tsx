@@ -14,6 +14,7 @@ const navigation = [
   { href: "/analytics", label: "Analitik Utilisasi", code: "05", icon: "analytics", resource: "analytics" },
   { href: "/improvements", label: "Tiket Perbaikan", code: "06", icon: "improvement", resource: "improvements" },
   { href: "/conflicts", label: "Peninjauan Bentrok", code: "07", icon: "conflict", resource: "conflicts" },
+  { href: "/users", label: "Pengguna", code: "08", icon: "overview", resource: "users" },
 ];
 
 function NavIcon({ name }: { name: string }) {
@@ -29,7 +30,7 @@ function NavIcon({ name }: { name: string }) {
   return <svg className="nav-icon" viewBox="0 0 24 24" aria-hidden="true">{paths[name]}</svg>;
 }
 
-export function AppShell({ children, user }: { children: React.ReactNode; user: { name: string; role: UserRole } }) {
+export function AppShell({ children, user }: { children: React.ReactNode; user: { name: string; role: UserRole; faculty: string | null } }) {
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useState(false);
 
@@ -61,7 +62,7 @@ export function AppShell({ children, user }: { children: React.ReactNode; user: 
         </nav>
         <div className="sidebar-footer">
           <div className="user-avatar">{user.name.charAt(0).toUpperCase()}</div>
-          <div className="user-details"><strong>{user.name}</strong><small>{user.role}</small></div>
+          <div className="user-details"><strong>{user.name}</strong><small>{user.role}{user.faculty ? ` · ${user.faculty}` : ""}</small></div>
           <form action="/api/logout" method="post" className="logout-form">
             <button type="submit" aria-label="Keluar">↗</button>
           </form>

@@ -9,6 +9,7 @@ datasource db {
 }
 
 enum Day {
+  MINGGU
   SENIN
   SELASA
   RABU
@@ -55,31 +56,34 @@ enum FlagType {
 }
 
 model User {
-  id        String   @id @default(cuid())
-  email     String   @unique
+  id        String     @id @default(cuid())
+  email     String     @unique
   name      String
-  role      UserRole @default(VIEWER)
-  tickets   Ticket[] @relation("TicketSubmitter")
+  role      UserRole   @default(VIEWER)
+  faculty   String?
+  tickets   Ticket[]   @relation("TicketSubmitter")
   auditLogs AuditLog[]
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
 }
 
 model Room {
-  id             String     @id @default(cuid())
-  code           String     @unique
-  name           String
-  building       String?
-  floor          String?
-  capacitySeat   Int
-  maxDailyMinutes Int       @default(360)
-  active         Boolean    @default(true)
-  schedules      Schedule[]
-  tickets        Ticket[]
-  createdAt      DateTime   @default(now())
-  updatedAt      DateTime   @updatedAt
+  id              String     @id @default(cuid())
+  code            String     @unique
+  name            String
+  building        String?
+  floor           String?
+  faculties       String[]   @default([])
+  capacitySeat    Int
+  maxDailyMinutes Int        @default(360)
+  active          Boolean    @default(true)
+  schedules       Schedule[]
+  tickets         Ticket[]
+  createdAt       DateTime   @default(now())
+  updatedAt       DateTime   @updatedAt
 
   @@index([code])
+  @@index([faculties], type: Gin)
 }
 
 model Course {
@@ -90,45 +94,51 @@ model Course {
 }
 
 model Schedule {
-  id               String   @id @default(cuid())
-  sourceCode       String?  @unique
+  id               String    @id @default(cuid())
+  sourceCode       String?   @unique
+  ticketId         String?   @unique
+  ticket           Ticket?   @relation("TicketSchedule", fields: [ticketId], references: [id], onDelete: SetNull)
   roomId           String
-  room             Room     @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  room             Room      @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  scheduledDate    DateTime? @db.Date
   courseId         String?
-  course           Course?  @relation(fields: [courseId], references: [id])
+  course           Course?   @relation(fields: [courseId], references: [id])
   day              Day
   startMinutes     Int
   endMinutes       Int
-  enrolledStudents Int      @default(0)
+  enrolledStudents Int       @default(0)
   className        String?
-  active           Boolean  @default(true)
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
+  active           Boolean   @default(true)
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
 
   @@index([roomId, day, startMinutes, endMinutes])
+  @@index([scheduledDate])
 }
 
 model Ticket {
-  id                 String       @id @default(cuid())
-  submitterId        String
-  submitter          User         @relation("TicketSubmitter", fields: [submitterId], references: [id])
-  targetRoomId       String
-  targetRoom         Room         @relation(fields: [targetRoomId], references: [id])
-  sourceScheduleId   String?
-  type               TicketType   @default(PEMINJAMAN)
-  targetDay          Day
-  startMinutes       Int
-  endMinutes         Int
-  enrolledStudents   Int
-  purpose            String
-  status             TicketStatus @default(DIAJUKAN)
-  adminNotes         String?
-  flags              TicketFlag[]
-  auditLogs          AuditLog[]
-  createdAt          DateTime     @default(now())
-  updatedAt          DateTime     @updatedAt
+  id               String       @id @default(cuid())
+  submitterId      String
+  submitter        User         @relation("TicketSubmitter", fields: [submitterId], references: [id])
+  targetRoomId     String
+  targetRoom       Room         @relation(fields: [targetRoomId], references: [id])
+  sourceScheduleId String?
+  type             TicketType   @default(PEMINJAMAN)
+  targetDay        Day
+  requestedDate    DateTime     @db.Date
+  startMinutes     Int
+  endMinutes       Int
+  enrolledStudents Int
+  purpose          String
+  status           TicketStatus @default(DIAJUKAN)
+  adminNotes       String?
+  flags            TicketFlag[]
+  auditLogs        AuditLog[]
+  schedule         Schedule?    @relation("TicketSchedule")
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
 
-  @@index([targetRoomId, targetDay, startMinutes, endMinutes])
+  @@index([targetRoomId, requestedDate, startMinutes, endMinutes])
   @@index([status])
 }
 
@@ -161,6 +171,7 @@ model ImprovementTicket {
   description String
   category    String
   solution    String
+  faculty     String?
   reference   String?
   priority    ImprovementPriority @default(SEDANG)
   status      ImprovementStatus   @default(OPEN)
@@ -174,4 +185,5 @@ model ImprovementTicket {
   @@index([status])
   @@index([priority])
   @@index([assigneeId])
+  @@index([faculty])
 }

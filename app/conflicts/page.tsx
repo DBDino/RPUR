@@ -3,6 +3,8 @@ import { verifySession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { minutesToTime } from "@/lib/time";
 import { can } from "@/lib/rbac";
+import { roomFacultyWhere } from "@/lib/faculty-scope";
+import { expireRoomRequests } from "@/lib/room-request-expiration";
 
 export const dynamic = "force-dynamic";
 
@@ -10,6 +12,7 @@ export default async function ConflictsPage({ searchParams }: { searchParams: Pr
   const user = await verifySession();
   if (!user) redirect("/login");
   if (!can(user.role, "conflicts")) redirect("/");
+  await expireRoomRequests();
   const filters = await searchParams;
   const conflicts = await prisma.$queryRaw<Array<{ pairId: string; roomCode: string; roomName: string; day: string; firstStart: number; firstEnd: number; secondStart: number; secondEnd: number; firstCourse: string | null; secondCourse: string | null }>>`
     SELECT
@@ -20,6 +23,7 @@ export default async function ConflictsPage({ searchParams }: { searchParams: Pr
       ca.name AS "firstCourse", cb.name AS "secondCourse"
     FROM "Schedule" a
     JOIN "Schedule" b ON a."roomId" = b."roomId" AND a.day = b.day AND a.id < b.id
+      AND (a."scheduledDate" IS NULL OR b."scheduledDate" IS NULL OR a."scheduledDate" = b."scheduledDate")
     JOIN "Room" r ON r.id = a."roomId"
     LEFT JOIN "Course" ca ON ca.id = a."courseId"
     LEFT JOIN "Course" cb ON cb.id = b."courseId"
@@ -27,10 +31,11 @@ export default async function ConflictsPage({ searchParams }: { searchParams: Pr
       AND a."startMinutes" < b."endMinutes" AND b."startMinutes" < a."endMinutes"
       AND (${filters.day ?? null}::text IS NULL OR a.day::text = ${filters.day})
       AND (${filters.room ?? null}::text IS NULL OR a."roomId" = ${filters.room})
+      AND (${!["KAPRODI", "SARPRAS"].includes(user.role)} OR ${user.faculty} = ANY(r.faculties))
     ORDER BY r.code, a.day, a."startMinutes"
     LIMIT 100
   `;
-  const rooms = await prisma.room.findMany({ select: { id: true, code: true }, orderBy: { code: "asc" }, take: 500 });
+  const rooms = await prisma.room.findMany({ where: roomFacultyWhere(user), select: { id: true, code: true }, orderBy: { code: "asc" }, take: 500 });
   return (
     <main className="workspace-main">
       <header className="dashboard-header"><div><span className="page-kicker">Roster / Deteksi Konflik</span><h1>Peninjauan Jadwal Bentrok</h1><p>Pasangan jadwal yang saling tumpang tindih pada ruang dan hari yang sama.</p></div></header>

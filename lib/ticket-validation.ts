@@ -7,6 +7,7 @@ export async function validateTicketInput(
   input: {
     roomId: string;
     day: Day;
+    requestedDate?: Date;
     startMinutes: number;
     endMinutes: number;
     enrolledStudents: number;
@@ -21,7 +22,14 @@ export async function validateTicketInput(
   if (!room.active) throw new TicketValidationError("Ruangan tidak aktif.");
 
   const schedules = await tx.schedule.findMany({
-    where: { roomId: input.roomId, day: input.day, active: true },
+    where: {
+      roomId: input.roomId,
+      day: input.day,
+      active: true,
+      ...(input.requestedDate
+        ? { OR: [{ scheduledDate: null }, { scheduledDate: input.requestedDate }] }
+        : {}),
+    },
     select: { id: true, startMinutes: true, endMinutes: true },
   });
 
@@ -36,7 +44,13 @@ export async function validateTicketInput(
   }
 
   const approvedTickets = await tx.ticket.findMany({
-    where: { targetRoomId: input.roomId, targetDay: input.day, status: "DISETUJUI" },
+    where: {
+      targetRoomId: input.roomId,
+      targetDay: input.day,
+      status: "DISETUJUI",
+      schedule: { is: null },
+      ...(input.requestedDate ? { requestedDate: input.requestedDate } : {}),
+    },
     select: { startMinutes: true, endMinutes: true },
   });
   const ticketOverlap = approvedTickets.some(

@@ -3,6 +3,8 @@ import { Day } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { verifySession } from "@/lib/auth";
 import { can } from "@/lib/rbac";
+import { roomFacultyWhere } from "@/lib/faculty-scope";
+import { expireRoomRequests } from "@/lib/room-request-expiration";
 
 export const dynamic = "force-dynamic";
 
@@ -10,11 +12,13 @@ export default async function AnalyticsPage({ searchParams }: { searchParams: Pr
   const user = await verifySession();
   if (!user) redirect("/login");
   if (!can(user.role, "analytics")) redirect("/");
+  await expireRoomRequests();
   const filters = await searchParams;
   const selectedDay = filters.day && Object.values(Day).includes(filters.day as Day) ? filters.day as Day : undefined;
-  const buildings = await prisma.room.findMany({ where: { building: { not: null } }, select: { building: true }, distinct: ["building"], orderBy: { building: "asc" } });
+  const facultyWhere = roomFacultyWhere(user);
+  const buildings = await prisma.room.findMany({ where: { ...facultyWhere, building: { not: null } }, select: { building: true }, distinct: ["building"], orderBy: { building: "asc" } });
   const rooms = await prisma.room.findMany({
-    where: { ...(filters.building ? { building: filters.building } : {}) },
+    where: { ...facultyWhere, ...(filters.building ? { building: filters.building } : {}) },
     include: { schedules: { where: { active: true, ...(selectedDay ? { day: selectedDay } : {}) } } },
     orderBy: { code: "asc" },
     take: 80,

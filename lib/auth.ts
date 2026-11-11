@@ -25,7 +25,7 @@ export function signSession(email: string, role: UserRole) {
   return `${payload}.${signature}`;
 }
 
-export const verifySession = cache(async function verifySession(): Promise<{ id: string; email: string; name: string; role: UserRole } | null> {
+export const verifySession = cache(async function verifySession(): Promise<{ id: string; email: string; name: string; role: UserRole; faculty: string | null } | null> {
   const cookie = (await cookies()).get(SESSION_COOKIE)?.value;
   if (!cookie) return null;
   const [payload, signature] = cookie.split(".");

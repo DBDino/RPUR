@@ -2,10 +2,20 @@ import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { DashboardCharts, type ChartDatum } from "@/components/dashboard-charts";
 import type { Day } from "@prisma/client";
+import { redirect } from "next/navigation";
+import { verifySession } from "@/lib/auth";
+import { roomFacultyWhere, scheduleFacultyWhere, ticketFacultyWhere } from "@/lib/faculty-scope";
+import { expireRoomRequests } from "@/lib/room-request-expiration";
 
 export const dynamic = "force-dynamic";
 
 export default async function HomePage() {
+  const user = await verifySession();
+  if (!user) redirect("/login");
+  await expireRoomRequests();
+  const roomWhere = roomFacultyWhere(user);
+  const scheduleWhere = { ...scheduleFacultyWhere(user), active: true };
+  const ticketWhere = ticketFacultyWhere(user);
   let roomCount = 0, scheduleCount = 0, ticketCount = 0;
   let rooms: { id: string; code: string; name: string; capacitySeat: number }[] = [];
   let roomsWithUsage: { building: string | null; _count: { schedules: number } }[] = [];
@@ -24,17 +34,18 @@ export default async function HomePage() {
   let unusedData: ChartDatum[] = [];
   try {
     [roomCount, scheduleCount, ticketCount, rooms, dayCounts, roomsWithUsage] = await Promise.all([
-      prisma.room.count(),
-      prisma.schedule.count({ where: { active: true } }),
-      prisma.ticket.count(),
-      prisma.room.findMany({ take: 8, orderBy: { code: "asc" } }),
-      prisma.schedule.groupBy({ by: ["day"], where: { active: true }, _count: { _all: true } }),
+      prisma.room.count({ where: roomWhere }),
+      prisma.schedule.count({ where: scheduleWhere }),
+      prisma.ticket.count({ where: ticketWhere }),
+      prisma.room.findMany({ where: roomWhere, take: 8, orderBy: { code: "asc" } }),
+      prisma.schedule.groupBy({ by: ["day"], where: scheduleWhere, _count: { _all: true } }),
       prisma.room.findMany({
+        where: roomWhere,
         include: { _count: { select: { schedules: { where: { active: true } } } } },
         orderBy: { code: "asc" },
       }),
     ]);
-    const dayNames: Record<Day, string> = { SENIN: "Senin", SELASA: "Selasa", RABU: "Rabu", KAMIS: "Kamis", JUMAT: "Jumat", SABTU: "Sabtu" };
+    const dayNames: Record<Day, string> = { MINGGU: "Minggu", SENIN: "Senin", SELASA: "Selasa", RABU: "Rabu", KAMIS: "Kamis", JUMAT: "Jumat", SABTU: "Sabtu" };
     const countMap = new Map(dayCounts.map((item) => [item.day, item._count._all]));
     dailyData = (Object.keys(dayNames) as Day[]).map((day) => ({ name: dayNames[day], value: countMap.get(day) ?? 0 }));
     idleRooms = roomsWithUsage.filter((room) => room._count.schedules === 0).length;
@@ -44,6 +55,10 @@ export default async function HomePage() {
       JOIN "Schedule" b ON a."roomId" = b."roomId" AND a."day" = b."day" AND a."id" < b."id"
       WHERE a."active" = true AND b."active" = true
         AND a."startMinutes" < b."endMinutes" AND b."startMinutes" < a."endMinutes"
+        AND (a."scheduledDate" IS NULL OR b."scheduledDate" IS NULL OR a."scheduledDate" = b."scheduledDate")
+        AND (${!["KAPRODI", "SARPRAS"].includes(user.role)} OR EXISTS (
+          SELECT 1 FROM "Room" r WHERE r.id = a."roomId" AND ${user.faculty} = ANY(r."faculties")
+        ))
     `;
     conflicts = Number(conflictCount[0]?.count ?? 0);
 

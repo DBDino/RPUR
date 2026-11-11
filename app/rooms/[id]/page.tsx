@@ -4,6 +4,8 @@ import { prisma } from "@/lib/prisma";
 import { verifySession } from "@/lib/auth";
 import { minutesToTime } from "@/lib/time";
 import { can } from "@/lib/rbac";
+import { roomFacultyWhere } from "@/lib/faculty-scope";
+import { expireRoomRequests } from "@/lib/room-request-expiration";
 
 export const dynamic = "force-dynamic";
 
@@ -11,15 +13,16 @@ export default async function RoomDetailPage({ params }: { params: Promise<{ id:
   const user = await verifySession();
   if (!user) redirect("/login");
   if (!can(user.role, "rooms")) redirect("/");
+  await expireRoomRequests();
   const { id } = await params;
-  const room = await prisma.room.findUnique({
-    where: { id },
+  const room = await prisma.room.findFirst({
+    where: { id, ...roomFacultyWhere(user) },
     include: { schedules: { where: { active: true }, include: { course: true }, orderBy: [{ day: "asc" }, { startMinutes: "asc" }] } },
   });
   if (!room) notFound();
   return (
     <main className="workspace-main">
-      <header className="dashboard-header"><div><Link href="/rooms" className="page-kicker">← Kembali ke inventaris</Link><h1>{room.code} · {room.name}</h1><p>{room.building ?? "Lokasi belum ditetapkan"}{room.floor ? ` · Lantai ${room.floor}` : ""}</p></div></header>
+      <header className="dashboard-header"><div><Link href="/rooms" className="page-kicker">← Kembali ke inventaris</Link><h1>{room.code} · {room.name}</h1><p>{room.faculties.join(", ") || "Fakultas belum ditetapkan"} · {room.building ?? "Lokasi belum ditetapkan"}{room.floor ? ` · Lantai ${room.floor}` : ""}</p></div></header>
       <section className="dashboard-content">
         <div className="analytics-grid">
           <article className="insight-card"><span>Kapasitas kursi</span><strong>{room.capacitySeat}</strong><p>Jumlah tempat duduk normal.</p></article>

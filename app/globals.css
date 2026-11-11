@@ -114,6 +114,14 @@ button, a { -webkit-tap-highlight-color: transparent; }
 .ticket-form input[name="purpose"] { grid-column: span 2; }
 .ticket-form button, .decision-form button, .filter-bar button { min-height: 42px; border: 0; border-radius: 7px; background: var(--forest); color: #fff; padding: 0 14px; cursor: pointer; font-size: 11px; font-weight: 700; }
 .ticket-action-cell { display: flex; flex-direction: column; align-items: stretch; gap: 8px; min-width: 280px; }
+.ticket-review { min-width: 220px; }
+.ticket-review > summary { width: fit-content; color: var(--forest); cursor: pointer; font-size: 11px; font-weight: 700; }
+.ticket-review-panel { display: grid; gap: 10px; min-width: 280px; max-width: 460px; padding: 12px 0 4px; }
+.ticket-review-panel p { margin: 0; color: var(--body); font-size: 11px; line-height: 1.5; overflow-wrap: anywhere; }
+.ticket-review-panel p strong, .ticket-review-flags > strong { color: var(--ink); }
+.ticket-review-flags { color: #a5482c; font-size: 11px; }
+.ticket-review-flags ul { margin: 4px 0 0; padding-left: 18px; }
+.ticket-review .decision-form { grid-template-columns: minmax(100px,1fr) auto auto; }
 .action-row, .delete-form { margin: 0; }
 .decision-form .reject-button { border: 1px solid var(--line-strong); background: var(--surface); color: var(--ink); }
 .danger-button {
@@ -133,7 +141,17 @@ button, a { -webkit-tap-highlight-color: transparent; }
 table { width: 100%; border-collapse: collapse; min-width: 680px; } th, td { padding: 14px 16px; text-align: left; border-bottom: 1px solid var(--line); font-size: 12px; } th { color: var(--muted); font-size: 9px; letter-spacing: .08em; text-transform: uppercase; } tr:last-child td { border-bottom: 0; } tbody tr:hover { background: var(--surface-soft); }
 .badge, .status-pill { padding: 5px 8px; border-radius: 20px; background: #edf0ec; font-size: 10px; white-space: nowrap; }.status-pill.success { background: #dff1e6; color: var(--success); }.status-pill.danger { background: #fae2d8; color: #a5482c; }
 .decision-form { display: grid; grid-template-columns: minmax(100px,1fr) auto auto; gap: 6px; }
+.schedule-edit-form { min-width: 320px; grid-template-columns: repeat(2, minmax(130px, 1fr)); }
+.schedule-edit-form button { grid-column: 1 / -1; }
+.schedule-edit-form label { display: grid; gap: 6px; color: var(--muted); font-size: 10px; font-weight: 700; }
+.schedule-edit-form select, .schedule-edit-form input { width: 100%; min-height: 42px; border: 1px solid var(--line-strong); border-radius: 7px; background: var(--surface); padding: 9px 11px; color: var(--ink); }
+.ticket-form label { display: grid; gap: 6px; color: var(--muted); font-size: 10px; font-weight: 700; }
 .filter-bar { margin-bottom: 14px; padding: 14px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); display: grid; grid-template-columns: minmax(220px,1fr) repeat(2,minmax(160px,.55fr)) auto; gap: 10px; align-items: end; }
+.room-filter-bar { grid-template-columns: minmax(240px,1.5fr) minmax(170px,1fr) minmax(160px,.8fr) auto; }
+.room-filter-bar-admin { grid-template-columns: minmax(240px,1.5fr) minmax(160px,1fr) minmax(150px,.8fr) minmax(220px,1.3fr) auto; }
+.schedule-filter-bar { grid-template-columns: minmax(260px,2fr) minmax(150px,1fr) minmax(170px,1.2fr) auto; }
+.schedule-filter-bar-admin { grid-template-columns: minmax(260px,2fr) minmax(130px,.9fr) minmax(160px,1.1fr) minmax(220px,1.6fr) auto; }
+.schedule-filter-bar button, .room-filter-bar button { min-width: 142px; white-space: nowrap; }
 .filter-bar label { display: grid; gap: 6px; color: var(--muted); font-size: 10px; font-weight: 700; }
 .data-toolbar { margin: 18px 2px 10px; display: flex; justify-content: space-between; font-size: 11px; color: var(--muted); }
 .ticket-warning { margin-top: 5px; color: #a5482c; font-size: 10px; }
@@ -158,10 +176,11 @@ table { width: 100%; border-collapse: collapse; min-width: 680px; } th, td { pad
 .demo-password { grid-column:1/-1; margin-top:9px; padding:10px 12px; border-radius:6px; background:var(--surface-soft); color:var(--muted); font-size:10px; }.demo-password span { margin-right:8px; text-transform:uppercase; letter-spacing:.06em; }.demo-password code { color:var(--forest); font-size:12px; font-weight:700; }
 @media (max-width:1100px) {
   .sidebar { width:212px; }.workspace { margin-left:212px; }.metrics-grid { grid-template-columns:repeat(2,1fr); }.dashboard-grid { grid-template-columns:1fr; }.chart-card { height:280px; }
+  .schedule-filter-bar, .schedule-filter-bar-admin, .room-filter-bar, .room-filter-bar-admin { grid-template-columns:repeat(2,minmax(0,1fr)); }.schedule-filter-bar button, .room-filter-bar button { justify-self:start; }
 }
 @media (max-width:720px) {
   .sidebar { position:static; width:100%; height:auto; }.sidebar-brand { height:78px; }.sidebar-label,.sidebar-footer { display:none; }.sidebar-nav { grid-template-columns:repeat(2,1fr); padding-bottom:12px; }.nav-item { min-height:42px; }.workspace { margin-left:0; }
   .dashboard-header { min-height:auto; padding:20px 16px; align-items:flex-start; }.dashboard-header h1 { font-size:30px; }.page-description { display:none; }.period-chip { display:none; }.sync-button { min-height:38px; gap:8px; }
   .dashboard-content { padding:16px; }.insight-banner { grid-template-columns:34px 1fr; }.insight-banner a { display:none; }.metrics-grid { grid-template-columns:1fr 1fr; gap:10px; }.metric-card { min-height:140px; padding:14px; }.metric-card > strong { font-size:32px; }.chart-card { height:270px; }
-  .ticket-form { grid-template-columns:1fr; }.ticket-form input[name="purpose"] { grid-column:auto; }.filter-bar { grid-template-columns:1fr; }.analytics-grid { grid-template-columns:1fr; }.login-page { display:block; }.login-panel { min-height:100vh; width:100%; padding:88px 24px 32px; }.login-context { display:none; }.login-panel h1 { font-size:38px; }.demo-roles { grid-template-columns:1fr; }
+  .ticket-form { grid-template-columns:1fr; }.ticket-form input[name="purpose"] { grid-column:auto; }.filter-bar, .schedule-filter-bar, .schedule-filter-bar-admin, .room-filter-bar, .room-filter-bar-admin { grid-template-columns:1fr; }.schedule-filter-bar button, .room-filter-bar button { justify-self:stretch; }.analytics-grid { grid-template-columns:1fr; }.login-page { display:block; }.login-panel { min-height:100vh; width:100%; padding:88px 24px 32px; }.login-context { display:none; }.login-panel h1 { font-size:38px; }.demo-roles { grid-template-columns:1fr; }
 }
