@@ -72,7 +72,7 @@ export function AppShell({ children, user }: { children: React.ReactNode; user: 
           <Link href="/" className="app-topbar-brand" aria-label="Beranda">
             <Image
               className="app-topbar-logo"
-              src="/header-unpad.svg"
+              src="/images/header-unpad.svg"
               alt="Logo Universitas Padjadjaran"
               width={220}
               height={55}
@@ -131,7 +131,7 @@ export function AppShell({ children, user }: { children: React.ReactNode; user: 
           {children}
           <footer className="app-footer">
             <Image
-              src="/footer-unpad.svg"
+              src="/images/footer-unpad.svg"
               alt="Universitas Padjadjaran"
               width={570}
               height={142}
