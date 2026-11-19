@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import type { UserRole } from "@prisma/client";
 import { can, type Resource } from "@/lib/rbac";
@@ -33,45 +34,112 @@ function NavIcon({ name }: { name: string }) {
 export function AppShell({ children, user }: { children: React.ReactNode; user: { name: string; role: UserRole; faculty: string | null } }) {
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useState(false);
+  const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
+  const [prevPathname, setPrevPathname] = useState(pathname);
+
+  if (prevPathname !== pathname) {
+    setPrevPathname(pathname);
+    setMobileDrawerOpen(false);
+  }
 
   function toggleSidebar() {
-    const next = !collapsed;
-    setCollapsed(next);
-    window.localStorage.setItem("rpur-sidebar", next ? "collapsed" : "expanded");
+    if (typeof window !== "undefined" && window.innerWidth < 768) {
+      setMobileDrawerOpen((prev) => !prev);
+    } else {
+      const next = !collapsed;
+      setCollapsed(next);
+      window.localStorage.setItem("rpur-sidebar", next ? "collapsed" : "expanded");
+    }
   }
 
   return (
-    <div className={`app-shell${collapsed ? " sidebar-collapsed" : ""}`}>
-      <aside className="sidebar">
-        <Link href="/" className="sidebar-brand" aria-label="RPUR dashboard">
-          <span className="brand-mark">U</span>
-          <span><strong>RPUR</strong><small>Campus Operations</small></span>
-        </Link>
-        <div className="sidebar-label">Ruang operasional</div>
-        <nav className="sidebar-nav" aria-label="Navigasi utama">
-          {navigation.map((item, index) => {
-            const active = item.exact ? pathname === "/" : pathname.startsWith(item.href);
-            if (!can(user.role, item.resource as Resource)) return null;
-            return (
-              <Link key={`${item.label}-${index}`} href={item.href} className={active ? "nav-item active" : "nav-item"}>
-                <NavIcon name={item.icon} />
-                <span>{item.label}</span>
-              </Link>
-            );
-          })}
-        </nav>
-        <div className="sidebar-footer">
-          <div className="user-avatar">{user.name.charAt(0).toUpperCase()}</div>
-          <div className="user-details"><strong>{user.name}</strong><small>{user.role}{user.faculty ? ` · ${user.faculty}` : ""}</small></div>
+    <div className={`app-shell${collapsed ? " sidebar-collapsed" : ""}${mobileDrawerOpen ? " mobile-drawer-open" : ""}`}>
+      <header className="app-topbar">
+        <div className="app-topbar-leading">
+          <button
+            className="sidebar-menu-toggle"
+            type="button"
+            onClick={toggleSidebar}
+            aria-label="Alihkan navigasi"
+            aria-controls="primary-navigation"
+            aria-expanded={mobileDrawerOpen || !collapsed}
+            title="Alihkan navigasi"
+          >
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M4 6h16M4 12h16M4 18h16" />
+            </svg>
+          </button>
+          <Link href="/" className="app-topbar-brand" aria-label="Beranda">
+            <Image
+              className="app-topbar-logo"
+              src="/header-unpad.svg"
+              alt="Logo Universitas Padjadjaran"
+              width={220}
+              height={55}
+              priority
+            />
+            <span><strong>RPUR</strong><small>Campus Operations</small></span>
+          </Link>
+        </div>
+        <div className="app-topbar-actions">
+          <div className="topbar-user">
+            <span className="topbar-avatar">{user.name.charAt(0).toUpperCase()}</span>
+            <span className="topbar-user-details">
+              <strong>{user.name}</strong>
+              <small>{user.role}{user.faculty ? ` · ${user.faculty}` : ""}</small>
+            </span>
+          </div>
           <form action="/api/logout" method="post" className="logout-form">
-            <button type="submit" aria-label="Keluar">↗</button>
+            <button type="submit" aria-label="Keluar" title="Keluar">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M13 4H5v16h8" />
+                <path d="M10 12h10m-4-4 4 4-4 4" />
+              </svg>
+            </button>
           </form>
         </div>
-        <button className="sidebar-toggle" type="button" onClick={toggleSidebar} aria-label={collapsed ? "Buka menu" : "Tutup menu"} aria-expanded={!collapsed}>
-          <span>{collapsed ? "›" : "‹"}</span>
-        </button>
-      </aside>
-      <div className="workspace">{children}</div>
+      </header>
+      <div className="app-layout">
+        {mobileDrawerOpen && (
+          <div
+            className="sidebar-backdrop"
+            onClick={() => setMobileDrawerOpen(false)}
+            aria-hidden="true"
+          />
+        )}
+        <aside className="sidebar" id="primary-navigation">
+          <div className="sidebar-label">Ruang operasional</div>
+          <nav className="sidebar-nav" aria-label="Navigasi utama">
+            {navigation.map((item, index) => {
+              const active = item.exact ? pathname === "/" : pathname.startsWith(item.href);
+              if (!can(user.role, item.resource as Resource)) return null;
+              return (
+                <Link
+                  key={`${item.label}-${index}`}
+                  href={item.href}
+                  className={active ? "nav-item active" : "nav-item"}
+                  onClick={() => setMobileDrawerOpen(false)}
+                >
+                  <NavIcon name={item.icon} />
+                  <span>{item.label}</span>
+                </Link>
+              );
+            })}
+          </nav>
+        </aside>
+        <div className="workspace">
+          {children}
+          <footer className="app-footer">
+            <Image
+              src="/footer-unpad.svg"
+              alt="Universitas Padjadjaran"
+              width={570}
+              height={142}
+            />
+            <p>© 2026 Universitas Padjadjaran. Seluruh hak cipta dilindungi.</p>
+          </footer>
+        </div>
+      </div>
     </div>
   );
 }

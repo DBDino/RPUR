@@ -8,6 +8,11 @@ import "./globals.css";
 export const metadata: Metadata = {
   title: "RPUR | Tata Kelola Ruang",
   description: "Dashboard roster perkuliahan dan utilisasi ruangan",
+  icons: {
+    icon: "/Unpad_logo-secondary_only-P.png",
+    shortcut: "/Unpad_logo-secondary_only-P.png",
+    apple: "/Unpad_logo-secondary_only-P.png",
+  },
 };
 
 async function AuthenticatedShell({ children }: Readonly<{ children: React.ReactNode }>) {

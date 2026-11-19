@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import Image from "next/image";
 import { verifySession } from "@/lib/auth";
 import { login } from "./actions";
 
@@ -13,16 +14,16 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
     <main className="login-page">
       <aside className="login-context" aria-label="Campus operations">
         <div className="campus-grid" aria-hidden="true"><i /><i /><i /><i /><i /></div>
-        <div className="login-context-brand"><span>U</span><strong>RPUR</strong></div>
-        <div className="login-context-copy">
-          <span>Universitas Padjadjaran</span>
-          <strong>Ruang, roster,<br />dan keputusan akademik.</strong>
-          <p>Porta operasional untuk tata kelola ruang dan utilitas kampus.</p>
-        </div>
-        <div className="login-context-index"><span>01</span><i /><span>RPUR / Campus Operations</span></div>
       </aside>
       <section className="login-panel">
-        <div className="login-mobile-brand"><span>U</span><strong>RPUR</strong></div>
+        <div className="login-brand">
+          <Image
+            src="/images/logo_unpad_letter.svg"
+            alt="Universitas Padjadjaran"
+            width={148}
+            height={80}
+          />
+        </div>
         <div className="login-entry">
           <p className="login-kicker">Akses sistem</p>
           <h1>Masuk ke<br />workspace RPUR.</h1>

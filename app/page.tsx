@@ -88,14 +88,22 @@ export default async function HomePage() {
   return (
     <main className="workspace-main">
       <header className="dashboard-header">
-        <div>
-          <span className="page-kicker">Direktorat Akademik / Intelligence Hub</span>
+        <article className="dashboard-profile">
+          <div className="dashboard-profile-mark">{user.name.charAt(0).toUpperCase()}</div>
+          <span className="dashboard-profile-label">Pengguna aktif</span>
+          <strong>{user.name}</strong>
+          <p>{user.role}{user.faculty ? ` · ${user.faculty}` : ""}</p>
+          <small>RPUR / Campus Operations</small>
+        </article>
+        <div className="dashboard-welcome">
+          <span className="page-kicker">Universitas Padjadjaran / Campus Operations</span>
+          <p className="welcome-greeting">Halo, {user.name}</p>
           <h1>Operasional Ruang &amp; Roster</h1>
-          <p className="page-description">Pemantauan terintegrasi jadwal, kapasitas, dan utilisasi ruang kampus.</p>
-        </div>
-        <div className="header-actions">
-          <div className="period-chip"><span>Periode aktif</span><strong>Semester Ganjil</strong></div>
-          <Link href="/rooms" className="sync-button">Buka inventaris <span>↗</span></Link>
+          <p className="page-description">Selamat datang di RPUR, platform operasional untuk memantau jadwal, kapasitas, dan utilisasi ruang kampus.</p>
+          <div className="header-actions">
+            <div className="period-chip"><span>Periode aktif</span><strong>Semester Ganjil</strong></div>
+            <Link href="/rooms" className="sync-button">Buka inventaris <span>↗</span></Link>
+          </div>
         </div>
       </header>
       {!configured && <div className="setup-panel"><strong>Database belum terhubung</strong><p>Salin <code>.env.example</code> menjadi <code>.env.local</code>, isi Neon connection string, lalu jalankan migrasi dan seed.</p><code>npm run db:deploy &amp;&amp; npm run db:seed</code></div>}
