@@ -2,13 +2,12 @@ import { redirect } from "next/navigation";
 import { Day, type Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { verifySession } from "@/lib/auth";
-import { minutesToTime } from "@/lib/time";
 import { Pagination } from "@/components/pagination";
-import Link from "next/link";
+import { SchedulesTable, type ScheduleItem } from "@/components/schedules-table";
+import { ScheduleCreateForm } from "@/components/schedule-create-form";
 import { can } from "@/lib/rbac";
 import { roomFacultyWhere } from "@/lib/faculty-scope";
 import { FACULTIES } from "@/lib/faculties";
-import { deleteSchedule, saveSchedule } from "./actions";
 
 export const dynamic = "force-dynamic";
 
@@ -89,20 +88,22 @@ export default async function SchedulesPage({
           <button type="submit">Terapkan filter</button>
         </form>
         {(can(user.role, "schedules", "add")) && (
-          <details className="filter-bar">
-            <summary>Tambah jadwal</summary>
-            <form action={saveSchedule} className="filter-bar">
-              <label>Kode ruangan<input name="roomCode" placeholder="Masukkan kode ruangan" required /></label>
-              <label>Hari<select name="day" required>{Object.values(Day).map(day => <option key={day} value={day}>{day}</option>)}</select></label>
-              <label>Mulai<input name="startTime" type="time" required /></label>
-              <label>Selesai<input name="endTime" type="time" required /></label>
-              <label>Peserta<input name="students" type="number" min="0" defaultValue="0" required /></label>
-              <label>Kelas<input name="className" /></label>
-              <button type="submit">Simpan jadwal</button>
-            </form>
+          <details className="entry-card">
+            <summary className="entry-card-summary">
+              <span className="entry-card-title">
+                <svg className="entry-card-chevron" viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="m9 18 6-6-6-6" fill="none" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+                Tambah Jadwal
+              </span>
+              <span className="entry-card-hint">Klik untuk membuka / menutup form input</span>
+            </summary>
+            <ScheduleCreateForm />
           </details>
         )}
         <div className="data-toolbar"><strong>{total.toLocaleString("id-ID")} jadwal ditemukan</strong><span>100 data per halaman</span></div>
+        <SchedulesTable schedules={schedules as ScheduleItem[]} canUpdate={can(user.role, "schedules", "update")} canDelete={can(user.role, "schedules", "delete")} userRole={user.role} userFaculty={user.faculty} />
+        {/*
         <div className="table-wrap"><table><thead><tr><th>Hari &amp; Waktu</th><th>Ruang</th><th>Mata Kuliah</th><th>Kelas</th><th>Peserta</th><th>Utilisasi</th>{(can(user.role, "schedules", "update") || can(user.role, "schedules", "delete")) && <th>Aksi</th>}</tr></thead>
           <tbody>{schedules.map((schedule) => {
             const ratio = schedule.room.capacitySeat ? schedule.enrolledStudents / schedule.room.capacitySeat * 100 : 0;
@@ -122,7 +123,7 @@ export default async function SchedulesPage({
               {can(user.role, "schedules", "delete") && <form action={deleteSchedule} className="delete-form"><input type="hidden" name="id" value={schedule.id} /><button className="danger-button" type="submit">Hapus jadwal</button></form>}
             </td>}</tr>;
           })}</tbody>
-        </table></div>
+        </table></div>*/}
         <Pagination page={page} pageSize={pageSize} total={total} query={{ q: filters.q, day: filters.day, room: filters.room, faculty: selectedFaculty }} />
       </section>
     </main>

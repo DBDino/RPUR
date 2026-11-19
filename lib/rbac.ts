@@ -36,8 +36,8 @@ const permissions: Record<UserRole, Partial<Record<Resource, Capability[]>>> = {
   },
   SARPRAS: {
     dashboard: ["view"],
-    rooms: ["view", "update"],
-    schedules: ["view"],
+    rooms: ["view", "add", "update", "delete"],
+    schedules: ["view", "add", "update", "delete"],
     analytics: ["view"],
     conflicts: ["view"],
     tickets: ["view", "add", "update"],

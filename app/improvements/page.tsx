@@ -57,31 +57,43 @@ export default async function ImprovementsPage({ searchParams }: { searchParams:
         </form>
         {can(user.role, "improvements", "add") && <form action={createImprovement} className="ticket-form improvement-form">
           <FacultyRoomSelect faculties={requestFaculties} rooms={rooms} />
-          <input name="title" placeholder="Judul temuan" required />
-          <input name="category" placeholder="Kategori, mis. Utilisasi" required />
-          <select name="priority" defaultValue="SEDANG">{Object.values(ImprovementPriority).map((value) => <option key={value} value={value}>{value}</option>)}</select>
-          <textarea name="description" placeholder="Deskripsi temuan dan dampak" required />
-          <textarea name="solution" placeholder="Saran solusi" required />
-          <input name="reference" placeholder="Referensi data, ruangan, atau jadwal" />
+          <label>Judul temuan<input name="title" placeholder="Judul temuan" required /></label>
+          <label>Kategori<input name="category" placeholder="Misalnya: utilisasi" required /></label>
+          <label>Prioritas<select name="priority" defaultValue="SEDANG">{Object.values(ImprovementPriority).map((value) => <option key={value} value={value}>{value}</option>)}</select></label>
+          <label>Deskripsi<input name="description" placeholder="Deskripsi temuan dan dampak" required /></label>
+          <label>Saran solusi<input name="solution" placeholder="Saran solusi" required /></label>
+          <label>Referensi<input name="reference" placeholder="Ruangan, jadwal, atau sumber data" /></label>
           <button type="submit">Buat tiket perbaikan</button>
         </form>}
         <div className="section-heading"><div><div className="eyebrow">{user.role === "SARPRAS" ? "Tiket milik Anda dan fakultas yang dikelola" : user.role === "ADMIN" ? "Semua fakultas" : "Tiket Anda"}</div><h2>Saran dan tindak lanjut perbaikan</h2></div></div>
         <div className="table-wrap"><table><thead><tr><th>Tiket</th><th>Fakultas</th><th>Prioritas</th><th>Status</th><th>{canManage ? "Aksi / Referensi" : "Referensi"}</th></tr></thead>
           <tbody>{tickets.map((ticket) => <tr key={ticket.id}>
-            <td><strong>{ticket.title}</strong><br /><small>{ticket.category}</small><p>{ticket.description}</p></td>
+            <td><strong>{ticket.title}</strong><br /><small>{ticket.category}</small></td>
             <td>{ticket.faculty ?? "Belum ditetapkan"}{user.role === "SARPRAS" && ticket.creatorId === user.id && <><br /><small>Tiket Anda</small></>}</td>
             <td>{ticket.priority}</td><td><span className="badge">{ticket.status}</span></td>
-            <td>{(user.role === "ADMIN" || (user.role === "SARPRAS" && ticket.creatorId !== user.id && ticket.faculty === user.faculty)) ? <div className="ticket-action-cell"><form action={updateImprovement} className="decision-form improvement-actions">
-              <input type="hidden" name="id" value={ticket.id} />
-              <select name="status" defaultValue={ticket.status}>{Object.values(ImprovementStatus).map((value) => <option key={value}>{value}</option>)}</select>
-              <select name="priority" defaultValue={ticket.priority}>{Object.values(ImprovementPriority).map((value) => <option key={value}>{value}</option>)}</select>
-              <select name="assigneeId" defaultValue={ticket.assigneeId ?? ""}><option value="">Belum ditugaskan</option>{assignees.map((assignee) => <option key={assignee.id} value={assignee.id}>{assignee.name}</option>)}</select>
-              <input name="resolution" defaultValue={ticket.resolution ?? ""} placeholder="Catatan penyelesaian/bukti" />
-              <input name="evidence" defaultValue={ticket.evidence ?? ""} placeholder="Referensi bukti" />
-              <button type="submit">Simpan</button>
-            </form></div> : ticket.reference || "-"}
-              {(user.role === "ADMIN" || (user.role === "SARPRAS" && ticket.creatorId === user.id)) && <form action={deleteImprovement} className="delete-form"><input type="hidden" name="id" value={ticket.id} /><button className="danger-button" type="submit">Hapus tiket</button></form>}
-            </td>
+            <td><details className="ticket-review improvement-review" name="improvement-ticket-details">
+              <summary>Lihat deskripsi</summary>
+              <div className="ticket-review-panel">
+                <p><strong>Deskripsi temuan</strong><br />{ticket.description}</p>
+                <p><strong>Saran solusi</strong><br />{ticket.solution}</p>
+                <p><strong>Referensi</strong><br />{ticket.reference || "-"}</p>
+                {ticket.resolution && <p><strong>Catatan penyelesaian</strong><br />{ticket.resolution}</p>}
+                {ticket.evidence && <p><strong>Bukti</strong><br />{ticket.evidence}</p>}
+                {(user.role === "ADMIN" || (user.role === "SARPRAS" && ticket.creatorId !== user.id && ticket.faculty === user.faculty)) && <form action={updateImprovement} className="decision-form improvement-actions">
+                  <input type="hidden" name="id" value={ticket.id} />
+                  <label>Status<select name="status" defaultValue={ticket.status}>{Object.values(ImprovementStatus).map((value) => <option key={value}>{value}</option>)}</select></label>
+                  <label>Prioritas<select name="priority" defaultValue={ticket.priority}>{Object.values(ImprovementPriority).map((value) => <option key={value}>{value}</option>)}</select></label>
+                  <label>Penanggung jawab<select name="assigneeId" defaultValue={ticket.assigneeId ?? ""}><option value="">Belum ditugaskan</option>{assignees.map((assignee) => <option key={assignee.id} value={assignee.id}>{assignee.name}</option>)}</select></label>
+                  <label>Catatan penyelesaian<input name="resolution" defaultValue={ticket.resolution ?? ""} placeholder="Catatan penyelesaian" /></label>
+                  <label>Bukti<input name="evidence" defaultValue={ticket.evidence ?? ""} placeholder="Referensi bukti" /></label>
+                  <button type="submit">Simpan perubahan</button>
+                </form>}
+                {(user.role === "ADMIN" || (user.role === "SARPRAS" && ticket.creatorId === user.id)) && <details className="inline-delete-menu ticket-delete-menu">
+                  <summary>Opsi lainnya</summary>
+                  <form action={deleteImprovement} className="delete-form"><input type="hidden" name="id" value={ticket.id} /><button className="danger-button" type="submit">Hapus tiket</button></form>
+                </details>}
+              </div>
+            </details></td>
           </tr>)}
           {!tickets.length && <tr><td colSpan={5}>Belum ada tiket perbaikan.</td></tr>}</tbody>
         </table></div>

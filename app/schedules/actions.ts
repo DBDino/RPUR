@@ -17,6 +17,28 @@ export async function deleteSchedule(formData: FormData) {
   revalidatePath("/schedules");
 }
 
+export async function deleteSchedulesBatch(formData: FormData) {
+  const user = await verifySession();
+  if (!user || !can(user.role, "schedules", "delete")) throw new Error("Anda tidak memiliki kewenangan menghapus jadwal.");
+  const rawIds = String(formData.get("ids") ?? "");
+  let ids: string[] = [];
+  try {
+    ids = JSON.parse(rawIds);
+  } catch {
+    ids = rawIds.split(",").map((s) => s.trim()).filter(Boolean);
+  }
+  if (!Array.isArray(ids) || ids.length === 0) throw new Error("Pilih jadwal yang ingin dihapus.");
+
+  const allowedSchedules = await prisma.schedule.findMany({
+    where: { id: { in: ids }, ...scheduleFacultyWhere(user) },
+    select: { id: true },
+  });
+  const allowedIds = allowedSchedules.map((s) => s.id);
+  if (allowedIds.length === 0) throw new Error("Tidak ada jadwal dalam cakupan fakultas Anda yang dapat dihapus.");
+  await prisma.schedule.deleteMany({ where: { id: { in: allowedIds } } });
+  revalidatePath("/schedules");
+}
+
 export async function saveSchedule(formData: FormData) {
   const user = await verifySession();
   if (!user) throw new Error("Sesi tidak valid.");

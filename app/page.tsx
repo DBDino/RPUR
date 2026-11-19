@@ -49,8 +49,8 @@ export default async function HomePage() {
     const countMap = new Map(dayCounts.map((item) => [item.day, item._count._all]));
     dailyData = (Object.keys(dayNames) as Day[]).map((day) => ({ name: dayNames[day], value: countMap.get(day) ?? 0 }));
     idleRooms = roomsWithUsage.filter((room) => room._count.schedules === 0).length;
-    const conflictCount = await prisma.$queryRaw<{ count: bigint }[]>`
-      SELECT COUNT(*)::bigint AS count
+    const conflictCounts = await prisma.$queryRaw<{ day: Day; count: bigint }[]>`
+      SELECT a."day" AS day, COUNT(*)::bigint AS count
       FROM "Schedule" a
       JOIN "Schedule" b ON a."roomId" = b."roomId" AND a."day" = b."day" AND a."id" < b."id"
       WHERE a."active" = true AND b."active" = true
@@ -59,8 +59,14 @@ export default async function HomePage() {
         AND (${!["KAPRODI", "SARPRAS"].includes(user.role)} OR EXISTS (
           SELECT 1 FROM "Room" r WHERE r.id = a."roomId" AND ${user.faculty} = ANY(r."faculties")
         ))
+      GROUP BY a."day"
     `;
-    conflicts = Number(conflictCount[0]?.count ?? 0);
+    const conflictsByDay = new Map(conflictCounts.map(({ day, count }) => [day, Number(count)]));
+    conflictData = (Object.keys(dayNames) as Day[]).map((day) => ({
+      name: dayNames[day],
+      value: conflictsByDay.get(day) ?? 0,
+    }));
+    conflicts = conflictData.reduce((total, item) => total + item.value, 0);
 
     occupancyData = [
       { name: "Over (>100%)", value: 0 }, { name: "Optimal (70-100%)", value: 0 },

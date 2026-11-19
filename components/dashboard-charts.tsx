@@ -38,15 +38,19 @@ export function DashboardCharts({
       <section className="chart-card conflicts-card" id="jadwal">
         <h2><span className="chart-title-icon red">▥</span> Kasus Jadwal Bentrok</h2>
         <div className="chart-area">
-          <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={conflicts} margin={{ top: 8, right: 4, left: -18, bottom: 18 }}>
-              <CartesianGrid stroke="#ecebe7" vertical />
-              <XAxis dataKey="name" tick={{ fontSize: 10, fill: "#737782" }} interval={0} angle={-12} textAnchor="end" />
-              <YAxis tick={{ fontSize: 10, fill: "#737782" }} />
-              <Tooltip contentStyle={tooltipStyle} />
-              <Bar dataKey="value" fill="#ef5a5f" radius={[4, 4, 0, 0]} />
-            </BarChart>
-          </ResponsiveContainer>
+          {conflicts.some((item) => item.value > 0) ? (
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={conflicts} margin={{ top: 8, right: 4, left: -18, bottom: 18 }}>
+                <CartesianGrid stroke="#ecebe7" vertical />
+                <XAxis dataKey="name" tick={{ fontSize: 10, fill: "#737782" }} interval={0} angle={-12} textAnchor="end" />
+                <YAxis tick={{ fontSize: 10, fill: "#737782" }} />
+                <Tooltip contentStyle={tooltipStyle} />
+                <Bar dataKey="value" fill="#ef5a5f" radius={[4, 4, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          ) : (
+            <div className="chart-empty-state">Tidak ada bentrok jadwal yang terdeteksi.</div>
+          )}
         </div>
       </section>
 

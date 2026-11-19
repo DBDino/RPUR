@@ -67,15 +67,16 @@ export default async function TicketsPage({ searchParams }: { searchParams: Prom
           <label>Tanggal permintaan<input name="requestedDate" type="date" min={new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Jakarta" }).format(new Date())} required /></label>
           <label>Jam mulai<input name="startTime" type="time" required /></label>
           <label>Jam selesai<input name="endTime" type="time" required /></label>
-          <input name="students" type="number" min="1" placeholder="Jumlah mahasiswa" required /><input name="purpose" placeholder="Tujuan penggunaan" required />
+          <label>Jumlah mahasiswa<input name="students" type="number" min="1" placeholder="Jumlah mahasiswa" required /></label>
+          <label>Tujuan penggunaan<input name="purpose" placeholder="Tujuan penggunaan" required /></label>
           <button type="submit">Ajukan tiket</button>
         </form>}
         <div className="section-heading"><div><div className="eyebrow">{["ADMIN", "SARPRAS"].includes(user.role) ? "Antrean peninjauan" : "Pengajuan Anda"}</div><h2>{user.role === "ADMIN" ? "Semua tiket" : user.role === "SARPRAS" ? "Pengajuan saya dan permintaan fakultas" : "Status pengajuan"}</h2></div></div>
         <div className="table-wrap"><table><thead><tr><th>Ruangan</th><th>Pengaju</th><th>Waktu</th><th>Peserta</th><th>Status</th><th>Tinjau</th></tr></thead>
           <tbody>{tickets.map(ticket => <tr key={ticket.id}><td><strong>{ticket.targetRoom.code}</strong><br />{ticket.targetRoom.name}<br /><small>Fakultas: {ticket.targetRoom.faculties.join(", ") || "Belum ditetapkan"}</small>{ticket.flags.length > 0 && <div className="ticket-warning">⚠ {ticket.flags.length} perhatian</div>}</td><td>{ticket.submitter.name}{user.role === "SARPRAS" && ticket.submitterId === user.id && <><br /><small>Pengajuan Anda</small></>}</td><td>{new Intl.DateTimeFormat("id-ID", { dateStyle: "medium", timeZone: "Asia/Jakarta" }).format(ticket.requestedDate)}<br />{ticket.targetDay}<br />{minutesToTime(ticket.startMinutes)}–{minutesToTime(ticket.endMinutes)} WIB</td><td>{ticket.enrolledStudents}</td><td><span className="badge">{ticket.status}</span></td>
             <td className="ticket-action-cell">
-              <details className="ticket-review">
-                <summary>Tinjau permintaan</summary>
+              <details className="ticket-review" name="room-request-details">
+                <summary>Lihat deskripsi &amp; tindakan</summary>
                 <div className="ticket-review-panel">
                   <p><strong>Alasan permintaan</strong><br />{ticket.purpose}</p>
                   <p><strong>Ruangan</strong><br />{ticket.targetRoom.code} — {ticket.targetRoom.name}<br /><small>Fakultas: {ticket.targetRoom.faculties.join(", ") || "Belum ditetapkan"}</small></p>
@@ -93,14 +94,17 @@ export default async function TicketsPage({ searchParams }: { searchParams: Prom
                     </form>
                   )}
                   {ticket.status === "DIAJUKAN" && user.role === "SARPRAS" && ticket.submitterId === user.id && <small>Pengajuan Anda hanya dapat dihapus, tidak dapat diputuskan sendiri.</small>}
+                  {(user.role === "ADMIN" || (user.role === "SARPRAS" && ticket.submitterId === user.id)) && (
+                    <details className="inline-delete-menu ticket-delete-menu">
+                      <summary>Opsi lainnya</summary>
+                      <form action={deleteTicket} className="delete-form">
+                        <input type="hidden" name="ticketId" value={ticket.id} />
+                        <button type="submit" className="danger-button">Hapus tiket</button>
+                      </form>
+                    </details>
+                  )}
                 </div>
               </details>
-              {(user.role === "ADMIN" || (user.role === "SARPRAS" && ticket.submitterId === user.id)) && (
-                <form action={deleteTicket} className="delete-form">
-                  <input type="hidden" name="ticketId" value={ticket.id} />
-                  <button type="submit" className="danger-button">Hapus tiket</button>
-                </form>
-              )}
             </td>
           </tr>)}
           {!tickets.length && <tr><td colSpan={5}>Belum ada tiket.</td></tr>}</tbody>
