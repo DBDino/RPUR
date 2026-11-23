@@ -9,9 +9,9 @@ export const metadata: Metadata = {
   title: "RPUR | Tata Kelola Ruang",
   description: "Dashboard roster perkuliahan dan utilisasi ruangan",
   icons: {
-    icon: "/Unpad_logo-secondary_only-P.png",
-    shortcut: "/Unpad_logo-secondary_only-P.png",
-    apple: "/Unpad_logo-secondary_only-P.png",
+    icon: "/images/Unpad_logo-secondary_only-P.png",
+    shortcut: "/images/Unpad_logo-secondary_only-P.png",
+    apple: "/images/Unpad_logo-secondary_only-P.png",
   },
 };
 
